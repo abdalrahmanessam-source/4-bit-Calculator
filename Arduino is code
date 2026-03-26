@@ -1,0 +1,104 @@
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+#include <Keypad.h>
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+const byte ROWS = 4;
+const byte COLS = 4;
+char keys[ROWS][COLS] = {
+{'1','2','3','+'},
+
+{'7','8','9','X'},
+{'.','0','=','/'}
+};
+byte rowPins[ROWS] = {2, 3, 4, 5};
+byte colPins[COLS] = {6, 7, 8, 9};
+Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
+String num1="";
+String num2="";
+char op=0;
+bool enteringFirst=true;
+void clearAll(){
+num1="";
+num2="";
+op=0;
+enteringFirst=true;
+lcd.clear();
+}
+void setup() {
+lcd.init();
+lcd.backlight();
+lcd.clear();
+lcd.setCursor(0,0);
+lcd.print("4-Bit Logic Calculator");
+delay(1500);
+lcd.clear();
+}
+void loop() {
+char key = keypad.getKey();
+{'4','5','6','-'},
+
+if(key){
+if(key>='0' && key<='9'){
+if(enteringFirst) num1+=key;
+else num2+=key;
+}
+else if(key=='+' || key=='-' || key=='X' || key=='/' || key=='.'){
+if(num1!=""){
+op=key;
+enteringFirst=false;
+}
+}
+else if(key=='='){
+if(num1!="" && num2!="" && op!=0){
+calculate();
+}
+}
+showDisplay();
+}
+}
+void showDisplay(){
+lcd.clear();
+lcd.setCursor(0,0);
+lcd.print(num1);
+if(op!=0){
+lcd.print(" ");
+if(op=='X') lcd.print("XOR");
+else if(op=='/') lcd.print("AND");
+else if(op=='.') lcd.print("OR");
+else lcd.print(op);
+
+lcd.print(" ");
+lcd.print(num2);
+}
+}
+void calculate(){
+int A = num1.toInt();
+int B = num2.toInt();
+int result = 0;
+switch(op){
+case '+': result=A+B; break;
+case '-': result=A-B; break;
+case 'X': result=A^B; break;
+case '/': result=A&B; break;
+case '.': result=A|B; break;
+}
+if(result>15 || result<0){
+lcd.clear();
+lcd.print("Invalid 4-bit");
+delay(2000);
+clearAll();
+return;
+}
+lcd.clear();
+lcd.setCursor(0,0);
+if(op=='X') lcd.print(num1 + String(" XOR ") + num2);
+else if(op=='/') lcd.print(num1 + String(" AND ") + num2);
+else if(op=='.') lcd.print(num1 + String(" OR ") + num2);
+else lcd.print(num1 + String(" ") + op + String(" ") + num2);
+
+lcd.setCursor(0,1);
+lcd.print("= ");
+lcd.print(result);
+delay(2000);
+clearAll();
+}
